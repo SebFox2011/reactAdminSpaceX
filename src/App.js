@@ -1,45 +1,56 @@
 // in src/App.js
 import * as React from "react"
-import { Admin, Resource,  fetchUtils,EditGuesser , ListGuesser } from "react-admin"
+import { Admin, Resource, EditGuesser } from "react-admin"
 import jsonServerProvider from "ra-data-json-server" // fake data
 import fetchProvider from "./simpleProvider"
-import {UserList} from './users'
-import {CapsuleList} from './capsules'
-import Dashboard from './DashBoard';
+import { UserList } from "./users"
+import { CapsuleList } from "./capsules"
+import Dashboard from "./DashBoard"
+import MyLoginPage from "./MyLoginPage"
+import MyLogoutButton from "./MyLogoutButton"
 
 const authProvider = {
-    login: ({ username, password }) =>  {
-        const request = new Request('https://mydomain.com/authenticate', {
-            method: 'POST',
-            body: JSON.stringify({ username, password }),
-            headers: new Headers({ 'Content-Type': 'application/json' }),
-        })
-        return fetch(request)
-            .then(response => {
-                if (response.status < 200 || response.status >= 300) {
-                    throw new Error(response.statusText);
-                }
-                return response.json()
-            })
-            .then(auth => {
-                localStorage.setItem('auth', JSON.stringify(auth))
-            })
-            .catch(() => {
-                throw new Error('Network error')
-            })},
-    logout: params => Promise.resolve(),
-    checkAuth: params => Promise.resolve(),
-    checkError: error => Promise.resolve(),
-    getPermissions: params => Promise.resolve(),
+  login: ({ username, password }) => {
+    if (username === "sm" && password === "0000") {
+      localStorage.setItem("username", username)
+      return Promise.resolve()
+    } else return Promise.reject()
+  },
+  logout: () => {
+    localStorage.removeItem("username")
+    return Promise.resolve()
+  },
+  checkError: ({ status }) => {
+    if (status === 401 || status === 403) {
+      localStorage.removeItem("username")
+      return Promise.reject()
+    }
+    return Promise.resolve()
+  },
+  checkAuth: () => {
+    return localStorage.getItem("username")
+      ? Promise.resolve()
+      : Promise.reject()
+  },
+  getPermissions: (params) => {
+      console.log("Permissions",params
+      )
+      return Promise.resolve()},
 }
 
 const App = () => {
-    const dataProvider = jsonServerProvider('https://jsonplaceholder.typicode.com');//
+  const dataProvider = jsonServerProvider(
+    "https://jsonplaceholder.typicode.com"
+  ) //
 
   return (
-    <Admin authProvider={authProvider} dashboard={Dashboard} dataProvider={fetchProvider}>
-      <Resource name="capsules" list={CapsuleList} edit={EditGuesser}/>
-      <Resource name="crew" list={UserList} edit={EditGuesser}/>
+    <Admin
+      authProvider={authProvider}
+      dashboard={Dashboard}
+      dataProvider={fetchProvider}
+    >
+      <Resource name="capsules" list={CapsuleList} edit={EditGuesser} />
+      <Resource name="crew" list={UserList} edit={EditGuesser} />
     </Admin>
   )
 }
